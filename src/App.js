@@ -1,23 +1,73 @@
-import logo from './logo.svg';
+import React, { useState } from 'react';
 import './App.css';
+import ResearcherCard from './components/ResearcherCard';
+import SwipeButtons from './components/SwipeButtons';
+
+// Updated fake data
+const researchers = [
+  {
+    researcher_id: 1,
+    user_id: 101,
+    name: "Dr. Emma Watson",
+    field_of_study: "Artificial Intelligence",
+    school_organization: "MIT",
+    citation_count: 1250,
+    research_papers: [
+      {
+        paper_id: 1,
+        title: "Ethical Considerations in AI Development",
+        publication_data: "2023-05-15",
+        citation_count: 75,
+        abstract: "This paper explores the ethical implications of AI development..."
+      },
+      {
+        paper_id: 2,
+        title: "Machine Learning in Healthcare",
+        publication_data: "2022-11-30",
+        citation_count: 120,
+        abstract: "An overview of machine learning applications in modern healthcare..."
+      }
+    ],
+    present: true,
+    imageUrl: "data:image/jpeg;base64,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"
+  },
+  {
+    researcher_id: 2,
+    user_id: 102,
+    name: "Prof. John Smith",
+    field_of_study: "Quantum Physics",
+    school_organization: "Stanford University",
+    citation_count: 3000,
+    research_papers: [
+      {
+        paper_id: 3,
+        title: "Quantum Entanglement in Superconductors",
+        publication_data: "2023-02-20",
+        citation_count: 50,
+        abstract: "A study on the phenomenon of quantum entanglement in superconducting materials..."
+      }
+    ],
+    present: true,
+    imageUrl: "https://cdn.nba.com/headshots/nba/latest/1040x760/2544.png"
+  },
+  // Add more fake researcher data here
+];
 
 function App() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handleSwipe = (direction) => {
+    // Here you would typically handle the swipe action (e.g., like, pass)
+    console.log(`Swiped ${direction} on ${researchers[currentIndex].name}`);
+    // Move to the next researcher
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % researchers.length);
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1>AcadeMingle</h1>
+      <ResearcherCard researcher={researchers[currentIndex]} />
+      <SwipeButtons onSwipe={handleSwipe} />
     </div>
   );
 }
