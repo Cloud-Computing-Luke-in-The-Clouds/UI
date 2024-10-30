@@ -1,0 +1,90 @@
+.swipe-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.swipe-button {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.swipe-button i {
+  font-size: 24px;
+  transition: all 0.2s ease;
+}
+
+/* Pass button */
+.swipe-button.pass {
+  border: 2px solid #ff4458;
+}
+
+.swipe-button.pass i {
+  color: #ff4458;
+}
+
+.swipe-button.pass:hover {
+  background: #ff4458;
+}
+
+.swipe-button.pass:hover i {
+  color: white;
+}
+
+/* Super Like button */
+.swipe-button.superlike {
+  border: 2px solid #00e1ff;
+}
+
+.swipe-button.superlike i {
+  color: #00e1ff;
+}
+
+.swipe-button.superlike:hover {
+  background: #00e1ff;
+}
+
+.swipe-button.superlike:hover i {
+  color: white;
+}
+
+/* Like button */
+.swipe-button.like {
+  border: 2px solid #24e5a9;
+}
+
+.swipe-button.like i {
+  color: #24e5a9;
+}
+
+.swipe-button.like:hover {
+  background: #24e5a9;
+}
+
+.swipe-button.like:hover i {
+  color: white;
+}
+
+/* Button hover and active states */
+.swipe-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.swipe-button:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+} 
