@@ -6,6 +6,7 @@ export const loginWithGoogle = async () => {
     await account.createOAuth2Session(OAuthProvider.Google, 'https://brendoncolumbia.net/', 'https://brendoncolumbia.net/fail')
   } catch (error) {
     console.error(error)
+    throw error
   }
 }
 
@@ -17,11 +18,27 @@ export const logoutUser = async () => {
   }
 }
 
+export const getCurrentSession = async () => {
+  try {
+    const session = await account.getSession('current')
+    return session
+  } catch (error) {
+    console.error('Session error:', error)
+    return null
+  }
+}
+
 export const getUser = async () => {
   try {
-    return await account.get()
+    const user = await account.get()
+    return {
+      email: user.email,
+      name: user.name,
+      id: user.$id,
+    }
   } catch (error) {
-    console.error(error)
+    console.error('Get user error:', error)
+    return null
   }
 }
 

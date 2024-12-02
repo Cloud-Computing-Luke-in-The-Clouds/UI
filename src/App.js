@@ -21,6 +21,16 @@ function App() {
   const checkAuthStatus = async () => {
     try {
       const session = await account.get();
+      console.log('User Data:', {
+        email: session.email,
+        name: session.name,
+        id: session.$id,
+        emailVerification: session.emailVerification,
+        phone: session.phone,
+        preferences: session.prefs,
+        // Add any other properties you want to log
+      });
+      
       setIsAuthenticated(true);
       setUserProfile(session);
       fetchResearchers();
