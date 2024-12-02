@@ -3,29 +3,52 @@ import './App.css';
 import ResearcherCard from './components/ResearcherCard';
 import SwipeButtons from './components/SwipeButtons';
 import ProfilePage from './components/ProfilePage';
+import Auth from './components/Auth';
+import { account } from './components/appwrite';
 
 function App() {
   const [researchers, setResearchers] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('discover');
-  const [userProfile, setUserProfile] = useState({
-    // Add default user profile data here
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
-    fetchResearchers();
+    checkAuthStatus();
   }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const session = await account.get();
+      setIsAuthenticated(true);
+      setUserProfile(session);
+      fetchResearchers();
+    } catch (error) {
+      console.log('User is not logged in');
+      setIsAuthenticated(false);
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await account.deleteSession('current');
+      setIsAuthenticated(false);
+      setUserProfile(null);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const fetchResearchers = async () => {
     try {
       const response = await fetch('https://researcher-profile-265479170833.us-central1.run.app/researchers');
       const data = await response.json();
-      // Transform the data to match our needed format
-      const transformedData = data.items.map((researcher, index) => ({
+      const transformedData = data.items.map((researcher) => ({
         imageUrl: researcher.image_url,
         name: researcher.researcher_name,
-        field_of_study: "Not specified", // These fields aren't in the API
+        field_of_study: "Not specified",
         school_organization: researcher.organization,
         present: true,
         google_scholar_link: researcher.google_scholar_link,
@@ -34,7 +57,7 @@ function App() {
         title: researcher.title,
         age: researcher.age,
         sex: researcher.sex,
-        research_papers: [] // API doesn't provide papers info
+        research_papers: []
       }));
       setResearchers(transformedData);
       setLoading(false);
@@ -52,7 +75,6 @@ function App() {
 
   const handleProfileSave = (updatedProfile) => {
     setUserProfile(updatedProfile);
-    // Here you would typically make an API call to update the profile
     console.log('Saving profile:', updatedProfile);
   };
 
@@ -71,6 +93,19 @@ function App() {
         return <div>Page not found</div>;
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="app-container">
+        <nav className="navbar">
+          <div className="nav-brand">AcadeMingle</div>
+        </nav>
+        <main className="main-content">
+          <Auth />
+        </main>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -132,6 +167,13 @@ function App() {
           >
             <i className="fas fa-user"></i>
             <span>Profile</span>
+          </button>
+          <button 
+            className="nav-item"
+            onClick={handleLogout}
+          >
+            <i className="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
           </button>
         </div>
       </nav>
