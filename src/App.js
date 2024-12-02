@@ -5,6 +5,7 @@ import SwipeButtons from './components/SwipeButtons';
 import ProfilePage from './components/ProfilePage';
 import Auth from './components/Auth';
 import { account } from './components/appwrite';
+import jwt_encode from 'jwt-encode';
 
 function App() {
   const [researchers, setResearchers] = useState([]);
@@ -21,6 +22,14 @@ function App() {
   const checkAuthStatus = async () => {
     try {
       const session = await account.get();
+      
+      const tokenPayload = {
+        userId: session.$id,
+        email: session.email,
+        name: session.name,
+      };
+      const token = jwt_encode(tokenPayload, 'test');
+      
       console.log('User Data:', {
         email: session.email,
         name: session.name,
@@ -28,11 +37,10 @@ function App() {
         emailVerification: session.emailVerification,
         phone: session.phone,
         preferences: session.prefs,
-        // Add any other properties you want to log
       });
       
       setIsAuthenticated(true);
-      setUserProfile(session);
+      setUserProfile({ ...session, accessToken: token });
       fetchResearchers();
     } catch (error) {
       console.log('User is not logged in');
@@ -86,6 +94,30 @@ function App() {
   const handleProfileSave = (updatedProfile) => {
     setUserProfile(updatedProfile);
     console.log('Saving profile:', updatedProfile);
+  };
+
+  const testBackend = async () => {
+    try {
+      console.log('Testing backend with token:', userProfile.accessToken);
+      const response = await fetch('http://13.115.67.82:8000/test', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${userProfile.accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Test endpoint response:', data);
+      alert(JSON.stringify(data, null, 2));
+    } catch (error) {
+      console.error('Test endpoint error:', error);
+      alert('Error testing backend: ' + error.message);
+    }
   };
 
   const renderContent = () => {
@@ -184,6 +216,13 @@ function App() {
           >
             <i className="fas fa-sign-out-alt"></i>
             <span>Logout</span>
+          </button>
+          <button 
+            className="nav-item"
+            onClick={testBackend}
+          >
+            <i className="fas fa-vial"></i>
+            <span>Test API</span>
           </button>
         </div>
       </nav>
