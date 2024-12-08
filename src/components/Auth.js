@@ -1,6 +1,6 @@
 // src/Auth.js
 import React, { useState } from 'react';
-import { loginWithGoogle, getUser } from './auth';
+import { loginWithGoogle, getUser } from './base_auth';
 
 const Auth = () => {
   const [error, setError] = useState(null);

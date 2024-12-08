@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import ResearcherCard from './components/ResearcherCard';
 import SwipeButtons from './components/SwipeButtons';
-import ProfilePage from './components/ProfilePage';
+import UserProfile from './components/UserProfile';
 import Auth from './components/Auth';
 import { account } from './components/appwrite';
 import jwt_encode from 'jwt-encode';
@@ -15,11 +15,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
 
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  const checkAuthStatus = async () => {
+  const checkAuthStatus = useCallback(async () => {
     try {
       const session = await account.get();
       
@@ -40,20 +36,31 @@ function App() {
       });
       
       setIsAuthenticated(true);
-      setUserProfile({ ...session, accessToken: token });
+      setUserProfile({ 
+        ...session, 
+        accessToken: token,
+        interest_list: session.prefs?.interests || [],
+        age: session.prefs?.age || '',
+        sex: session.prefs?.sex || ''
+      });
       fetchResearchers();
     } catch (error) {
       console.log('User is not logged in');
       setIsAuthenticated(false);
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, [checkAuthStatus]);
 
   const handleLogout = async () => {
     try {
       await account.deleteSession('current');
       setIsAuthenticated(false);
       setUserProfile(null);
+      setCurrentPage('discover');
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -91,9 +98,31 @@ function App() {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % researchers.length);
   };
 
-  const handleProfileSave = (updatedProfile) => {
-    setUserProfile(updatedProfile);
-    console.log('Saving profile:', updatedProfile);
+  const handleProfileSave = async (updatedProfile) => {
+    try {
+      // Update local state
+      setUserProfile(prev => ({
+        ...prev,
+        ...updatedProfile,
+        prefs: {
+          ...prev.prefs,
+          interests: updatedProfile.interest_list,
+          age: updatedProfile.age,
+          sex: updatedProfile.sex
+        }
+      }));
+
+      // Update Appwrite preferences
+      await account.updatePrefs({
+        interests: updatedProfile.interest_list,
+        age: updatedProfile.age,
+        sex: updatedProfile.sex
+      });
+
+      console.log('Profile updated successfully');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
   };
 
   const testBackend = async () => {
@@ -130,7 +159,7 @@ function App() {
           </>
         );
       case 'profile':
-        return <ProfilePage userProfile={userProfile} onSave={handleProfileSave} />;
+        return <UserProfile userProfile={userProfile} onSave={handleProfileSave} />;
       default:
         return <div>Page not found</div>;
     }
@@ -143,7 +172,7 @@ function App() {
           <div className="nav-brand">AcadeMingle</div>
         </nav>
         <main className="main-content">
-          <Auth />
+          <Auth onLogin={checkAuthStatus} />
         </main>
       </div>
     );
@@ -162,23 +191,6 @@ function App() {
           </div>
         </nav>
         <div className="loading-screen">Loading...</div>
-      </div>
-    );
-  }
-
-  if (researchers.length === 0) {
-    return (
-      <div className="app-container">
-        <nav className="navbar">
-          <div className="nav-brand">AcadeMingle</div>
-          <div className="nav-menu">
-            <button className="nav-item active">Discover</button>
-            <button className="nav-item">Matches</button>
-            <button className="nav-item">Messages</button>
-            <button className="nav-item">Profile</button>
-          </div>
-        </nav>
-        <div className="no-data">No researchers found</div>
       </div>
     );
   }
