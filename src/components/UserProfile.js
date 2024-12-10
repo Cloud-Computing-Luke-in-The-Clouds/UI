@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 const UserProfile = ({ userProfile, onSave }) => {
+  const fetchedRef = useRef(false);
   const [profile, setProfile] = useState({
     name: userProfile?.name || '',
     age: userProfile?.age || '',
@@ -13,8 +14,11 @@ const UserProfile = ({ userProfile, onSave }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchOrCreateProfile();
-  }, [userProfile?.email]);
+    if (userProfile?.email && !fetchedRef.current) {
+      fetchedRef.current = true;
+      fetchOrCreateProfile();
+    }
+  }, [userProfile]);
 
   const fetchOrCreateProfile = async () => {
     if (!userProfile?.email) return;
@@ -44,14 +48,14 @@ const UserProfile = ({ userProfile, onSave }) => {
             sex: userProfile.sex || '',
             interest_list: userProfile.interest_list || []
           };
-          
+          console.log("create")
           const createResponse = await axios.post('http://13.115.67.82:8000/user', newProfile, {
             headers: {
               'Authorization': `Bearer ${userProfile.accessToken}`,
               'Content-Type': 'application/json'
             }
           });
-          
+          console.log(createResponse.data);
           setProfile(createResponse.data);
         } catch (createErr) {
           setError('Failed to create profile');

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 const ResearcherProfile = ({ userProfile, onSave }) => {
+  const fetchedRef = useRef(false);
   const [profile, setProfile] = useState({
-    id: userProfile?.email || '',
+    user_id: userProfile?.email || '',
     image_url: '',
     google_scholar_link: '',
     personal_website_link: '',
@@ -15,8 +16,11 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchOrCreateProfile();
-  }, [userProfile?.email]);
+    if (userProfile?.email && !fetchedRef.current) {
+      fetchedRef.current = true;
+      fetchOrCreateProfile();
+    }
+  }, [userProfile]);
 
   const fetchOrCreateProfile = async () => {
     if (!userProfile?.email) return;
@@ -36,7 +40,7 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
       if (err.response?.status === 404) {
         try {
           const newProfile = {
-            id: userProfile.email,
+            user_id: userProfile.email,
             image_url: '',
             google_scholar_link: '',
             personal_website_link: '',
@@ -106,25 +110,25 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
       {!isEditing ? (
         <div className="profile-view">
           <p><strong>Email:</strong> {userProfile?.email}</p>
-          <p><strong>Title:</strong> {profile.title}</p>
-          <p><strong>Organization:</strong> {profile.organization}</p>
+          <p><strong>Title:</strong> {profile?.title || 'Not specified'}</p>
+          <p><strong>Organization:</strong> {profile?.organization || 'Not specified'}</p>
           <p><strong>Google Scholar:</strong> 
-            {profile.google_scholar_link ? (
-              <a href={profile.google_scholar_link} target="_blank" rel="noopener noreferrer">
+            {profile?.google_scholar_link ? (
+              <a href={profile?.google_scholar_link} target="_blank" rel="noopener noreferrer">
                 Link
               </a>
             ) : 'Not provided'}
           </p>
           <p><strong>Personal Website:</strong> 
-            {profile.personal_website_link ? (
-              <a href={profile.personal_website_link} target="_blank" rel="noopener noreferrer">
+            {profile?.personal_website_link ? (
+              <a href={profile?.personal_website_link} target="_blank" rel="noopener noreferrer">
                 Link
               </a>
             ) : 'Not provided'}
           </p>
           <p><strong>Profile Image:</strong> 
-            {profile.image_url ? (
-              <img src={profile.image_url} alt="Profile" style={{maxWidth: '200px', display: 'block', marginTop: '10px'}} />
+            {profile?.image_url ? (
+              <img src={profile?.image_url} alt="Profile" style={{maxWidth: '200px', display: 'block', marginTop: '10px'}} />
             ) : 'No image uploaded'}
           </p>
           <button 
@@ -141,7 +145,7 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
             <input
               type="text"
               name="title"
-              value={profile.title}
+              value={profile?.title || ''}
               onChange={handleInputChange}
               className="form-input"
               placeholder="e.g., Professor, Research Scientist"
@@ -153,7 +157,7 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
             <input
               type="text"
               name="organization"
-              value={profile.organization}
+              value={profile?.organization || ''}
               onChange={handleInputChange}
               className="form-input"
               placeholder="e.g., Columbia University"
@@ -165,7 +169,7 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
             <input
               type="url"
               name="google_scholar_link"
-              value={profile.google_scholar_link}
+              value={profile?.google_scholar_link || ''}
               onChange={handleInputChange}
               className="form-input"
               placeholder="https://scholar.google.com/..."
@@ -177,7 +181,7 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
             <input
               type="url"
               name="personal_website_link"
-              value={profile.personal_website_link}
+              value={profile?.personal_website_link || ''}
               onChange={handleInputChange}
               className="form-input"
               placeholder="https://..."
@@ -189,7 +193,7 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
             <input
               type="url"
               name="image_url"
-              value={profile.image_url}
+              value={profile?.image_url || ''}
               onChange={handleInputChange}
               className="form-input"
               placeholder="https://..."

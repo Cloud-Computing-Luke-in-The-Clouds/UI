@@ -73,17 +73,17 @@ function App() {
       const data = await response.json();
       const transformedData = data.items.map((researcher) => ({
         imageUrl: researcher.image_url,
-        name: researcher.researcher_name,
-        field_of_study: "Not specified",
-        school_organization: researcher.organization,
-        present: true,
+        // name: researcher.researcher_name,
+        // field_of_study: "Not specified",
+        // school_organization: researcher.organization,
+        // present: true,
         google_scholar_link: researcher.google_scholar_link,
         personal_website_link: researcher.personal_website_link,
         organization: researcher.organization,
         title: researcher.title,
-        age: researcher.age,
-        sex: researcher.sex,
-        research_papers: []
+        // age: researcher.age,
+        // sex: researcher.sex,
+        // research_papers: []
       }));
       setResearchers(transformedData);
       setLoading(false);
