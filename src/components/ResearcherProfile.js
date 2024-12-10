@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const UserProfile = ({ userProfile, onSave }) => {
+const ResearcherProfile = ({ userProfile, onSave }) => {
   const [profile, setProfile] = useState({
-    name: userProfile?.name || '',
-    age: userProfile?.age || '',
-    sex: userProfile?.sex || '',
-    interest_list: userProfile?.interest_list || []
+    id: userProfile?.email || '',
+    image_url: '',
+    google_scholar_link: '',
+    personal_website_link: '',
+    organization: '',
+    title: ''
   });
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -20,11 +22,8 @@ const UserProfile = ({ userProfile, onSave }) => {
     if (!userProfile?.email) return;
     
     try {
-      // Encode the email for the URL
       const encodedEmail = encodeURIComponent(userProfile.email);
-      
-      // First try to get the existing profile
-      const response = await axios.get(`http://13.115.67.82:8000/user/${encodedEmail}`, {
+      const response = await axios.get(`http://13.115.67.82:8000/researcher/${encodedEmail}`, {
         headers: {
           'Authorization': `Bearer ${userProfile.accessToken}`,
           'Content-Type': 'application/json'
@@ -35,17 +34,17 @@ const UserProfile = ({ userProfile, onSave }) => {
       
     } catch (err) {
       if (err.response?.status === 404) {
-        // If profile doesn't exist, create a new one
         try {
           const newProfile = {
-            user_id: userProfile.email,  // Use raw email for the body
-            name: userProfile.name || '',
-            age: userProfile.age || '',
-            sex: userProfile.sex || '',
-            interest_list: userProfile.interest_list || []
+            id: userProfile.email,
+            image_url: '',
+            google_scholar_link: '',
+            personal_website_link: '',
+            organization: '',
+            title: ''
           };
           
-          const createResponse = await axios.post('http://13.115.67.82:8000/user', newProfile, {
+          const createResponse = await axios.post('http://13.115.67.82:8000/researcher', newProfile, {
             headers: {
               'Authorization': `Bearer ${userProfile.accessToken}`,
               'Content-Type': 'application/json'
@@ -54,11 +53,11 @@ const UserProfile = ({ userProfile, onSave }) => {
           
           setProfile(createResponse.data);
         } catch (createErr) {
-          setError('Failed to create profile');
+          setError('Failed to create researcher profile');
           console.error('Profile creation error:', createErr);
         }
       } else {
-        setError('Failed to load profile');
+        setError('Failed to load researcher profile');
         console.error('Profile fetch error:', err);
       }
     } finally {
@@ -74,22 +73,12 @@ const UserProfile = ({ userProfile, onSave }) => {
     }));
   };
 
-  const handleInterestChange = (e) => {
-    const interests = e.target.value.split(',').map(item => item.trim());
-    setProfile(prev => ({
-      ...prev,
-      interest_list: interests
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Encode the email for the URL
       const encodedEmail = encodeURIComponent(userProfile.email);
-      
-      await axios.put(`http://13.115.67.82:8000/user/${encodedEmail}`, profile, {
+      await axios.put(`http://13.115.67.82:8000/researcher/${encodedEmail}`, profile, {
         headers: {
           'Authorization': `Bearer ${userProfile.accessToken}`,
           'Content-Type': 'application/json'
@@ -107,24 +96,36 @@ const UserProfile = ({ userProfile, onSave }) => {
     }
   };
 
-  if (loading) return <div className="loading">Loading profile...</div>;
+  if (loading) return <div className="loading">Loading researcher profile...</div>;
   if (error) return <div className="error">{error}</div>;
 
   return (
-    <div className="user-profile-container">
-      <h2>User Profile</h2>
+    <div className="researcher-profile-container">
+      <h2>Researcher Profile</h2>
       
       {!isEditing ? (
         <div className="profile-view">
           <p><strong>Email:</strong> {userProfile?.email}</p>
-          <p><strong>Name:</strong> {profile.name}</p>
-          <p><strong>Age:</strong> {profile.age}</p>
-          <p><strong>Sex:</strong> {profile.sex}</p>
-          <p>
-            <strong>Interests:</strong> 
-            {profile.interest_list && profile.interest_list.length > 0 
-              ? profile.interest_list.join(', ') 
-              : 'No interests added yet'}
+          <p><strong>Title:</strong> {profile.title}</p>
+          <p><strong>Organization:</strong> {profile.organization}</p>
+          <p><strong>Google Scholar:</strong> 
+            {profile.google_scholar_link ? (
+              <a href={profile.google_scholar_link} target="_blank" rel="noopener noreferrer">
+                Link
+              </a>
+            ) : 'Not provided'}
+          </p>
+          <p><strong>Personal Website:</strong> 
+            {profile.personal_website_link ? (
+              <a href={profile.personal_website_link} target="_blank" rel="noopener noreferrer">
+                Link
+              </a>
+            ) : 'Not provided'}
+          </p>
+          <p><strong>Profile Image:</strong> 
+            {profile.image_url ? (
+              <img src={profile.image_url} alt="Profile" style={{maxWidth: '200px', display: 'block', marginTop: '10px'}} />
+            ) : 'No image uploaded'}
           </p>
           <button 
             className="edit-button"
@@ -136,52 +137,62 @@ const UserProfile = ({ userProfile, onSave }) => {
       ) : (
         <form onSubmit={handleSubmit} className="profile-form">
           <div className="form-group">
-            <label>Name:</label>
+            <label>Title:</label>
             <input
               type="text"
-              name="name"
-              value={profile.name}
+              name="title"
+              value={profile.title}
               onChange={handleInputChange}
               className="form-input"
+              placeholder="e.g., Professor, Research Scientist"
             />
           </div>
 
           <div className="form-group">
-            <label>Age:</label>
+            <label>Organization:</label>
             <input
-              type="number"
-              name="age"
-              value={profile.age}
+              type="text"
+              name="organization"
+              value={profile.organization}
               onChange={handleInputChange}
               className="form-input"
+              placeholder="e.g., Columbia University"
             />
           </div>
 
           <div className="form-group">
-            <label>Sex:</label>
-            <select 
-              name="sex" 
-              value={profile.sex} 
+            <label>Google Scholar Link:</label>
+            <input
+              type="url"
+              name="google_scholar_link"
+              value={profile.google_scholar_link}
               onChange={handleInputChange}
               className="form-input"
-            >
-              <option value="">Select...</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
+              placeholder="https://scholar.google.com/..."
+            />
           </div>
 
           <div className="form-group">
-            <label>Interests (comma-separated):</label>
+            <label>Personal Website:</label>
             <input
-              type="text"
-              value={(profile.interest_list && profile.interest_list.length > 0) 
-                ? profile.interest_list.join(', ') 
-                : ''}
-              onChange={handleInterestChange}
+              type="url"
+              name="personal_website_link"
+              value={profile.personal_website_link}
+              onChange={handleInputChange}
               className="form-input"
-              placeholder="e.g., AI, Machine Learning, Data Science"
+              placeholder="https://..."
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Profile Image URL:</label>
+            <input
+              type="url"
+              name="image_url"
+              value={profile.image_url}
+              onChange={handleInputChange}
+              className="form-input"
+              placeholder="https://..."
             />
           </div>
 
@@ -207,4 +218,4 @@ const UserProfile = ({ userProfile, onSave }) => {
   );
 };
 
-export default UserProfile;
+export default ResearcherProfile;

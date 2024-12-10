@@ -3,6 +3,7 @@ import './App.css';
 import ResearcherCard from './components/ResearcherCard';
 import SwipeButtons from './components/SwipeButtons';
 import UserProfile from './components/UserProfile';
+import ResearcherProfile from './components/ResearcherProfile';
 import Auth from './components/Auth';
 import { account } from './components/appwrite';
 import jwt_encode from 'jwt-encode';
@@ -158,8 +159,10 @@ function App() {
             <SwipeButtons onSwipe={handleSwipe} />
           </>
         );
-      case 'profile':
+      case 'user-profile':
         return <UserProfile userProfile={userProfile} onSave={handleProfileSave} />;
+      case 'researcher-profile':
+        return <ResearcherProfile userProfile={userProfile} onSave={handleProfileSave} />;
       default:
         return <div>Page not found</div>;
     }
@@ -216,11 +219,18 @@ function App() {
             <span>Messages</span>
           </button>
           <button 
-            className={`nav-item ${currentPage === 'profile' ? 'active' : ''}`}
-            onClick={() => setCurrentPage('profile')}
+            className={`nav-item ${currentPage === 'user-profile' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('user-profile')}
           >
             <i className="fas fa-user"></i>
-            <span>Profile</span>
+            <span>User Profile</span>
+          </button>
+          <button 
+            className={`nav-item ${currentPage === 'researcher-profile' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('researcher-profile')}
+          >
+            <i className="fas fa-graduation-cap"></i>
+            <span>Researcher Profile</span>
           </button>
           <button 
             className="nav-item"
