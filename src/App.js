@@ -45,7 +45,8 @@ function App() {
         accessToken: token,
         interest_list: session.prefs?.interests || [],
         age: session.prefs?.age || '',
-        sex: session.prefs?.sex || ''
+        sex: session.prefs?.sex || '',
+        email: session.email
       });
       fetchResearchers();
       
@@ -84,20 +85,41 @@ function App() {
         organization: researcher.organization,
         title: researcher.title,
       }));
-      setResearchers(transformedData);
+
+      // Create a new array to store the updated researchers
+      const updatedResearchers = [];
+      
       for (const researcher of transformedData) {
-        const response = await axios.get(`http://34.31.64.142:8080/user/${researcher.user_id}`, {
-          headers: {
-            'Authorization': `Bearer ${userProfile.accessToken}`,
-            'Content-Type': 'application/json'
+        try {
+          if (researcher.user_id === userProfile?.email) {
+            continue;
           }
-        });
-        researcher.name = response.data.name;
-        researcher.age = response.data.age;
-        researcher.sex = response.data.sex;
-        researcher.interest_list = response.data.interest_list;
-        console.log(researcher);
+          const response = await axios.get(`http://34.31.64.142:8080/user/${encodeURIComponent(researcher.user_id)}`, {
+            headers: {
+              // 'Authorization': `Bearer ${userProfile.accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          // Combine researcher profile with user profile data
+          updatedResearchers.push({
+            ...researcher,
+            name: response.data.name,
+            age: response.data.age,
+            sex: response.data.sex,
+            interest_list: response.data.interest_list
+          });
+        } catch (error) {
+          console.error(`Error fetching user data for ${researcher.user_id}:`, error);
+          // Add researcher without user profile data if fetch fails
+          updatedResearchers.push(researcher);
+        }
       }
+
+      // Update state once with all the data
+      setResearchers(updatedResearchers);
+      console.log(updatedResearchers);
+
       setLoading(false);
     } catch (error) {
       console.error('Error fetching researchers:', error);
@@ -138,37 +160,17 @@ function App() {
     }
   };
 
-  const testBackend = async () => {
-    try {
-      console.log('Testing backend with token:', userProfile.accessToken);
-      const response = await fetch('http://13.115.67.82:8000/test', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${userProfile.accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('Test endpoint response:', data);
-      alert(JSON.stringify(data, null, 2));
-    } catch (error) {
-      console.error('Test endpoint error:', error);
-      alert('Error testing backend: ' + error.message);
-    }
-  };
-
   const renderContent = () => {
     switch(currentPage) {
       case 'discover':
         return (
           <>
             <ResearcherCard researcher={researchers[currentIndex]} />
-            <SwipeButtons onSwipe={handleSwipe} />
+            <SwipeButtons 
+              onSwipe={handleSwipe} 
+              userProfile={userProfile}
+              currentResearcher={researchers[currentIndex]}
+            />
           </>
         );
       case 'user-profile':
@@ -208,8 +210,6 @@ function App() {
           <div className="nav-brand">AcadeMingle</div>
           <div className="nav-menu">
             <button className="nav-item active">Discover</button>
-            <button className="nav-item">Matches</button>
-            <button className="nav-item">Messages</button>
             <button className="nav-item">Profile</button>
           </div>
         </nav>
@@ -229,14 +229,6 @@ function App() {
           >
             <i className="fas fa-search"></i>
             <span>Discover</span>
-          </button>
-          <button className="nav-item">
-            <i className="fas fa-heart"></i>
-            <span>Matches</span>
-          </button>
-          <button className="nav-item">
-            <i className="fas fa-comment"></i>
-            <span>Messages</span>
           </button>
           <button 
             className={`nav-item ${currentPage === 'user-profile' ? 'active' : ''}`}
@@ -258,13 +250,6 @@ function App() {
           >
             <i className="fas fa-sign-out-alt"></i>
             <span>Logout</span>
-          </button>
-          <button 
-            className="nav-item"
-            onClick={testBackend}
-          >
-            <i className="fas fa-vial"></i>
-            <span>Test API</span>
           </button>
         </div>
       </nav>
