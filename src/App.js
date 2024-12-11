@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './App.css';
 import ResearcherCard from './components/ResearcherCard';
 import SwipeButtons from './components/SwipeButtons';
@@ -7,6 +7,7 @@ import ResearcherProfile from './components/ResearcherProfile';
 import Auth from './components/Auth';
 import { account } from './components/appwrite';
 import jwt_encode from 'jwt-encode';
+import axios from 'axios';
 
 function App() {
   const [researchers, setResearchers] = useState([]);
@@ -15,6 +16,8 @@ function App() {
   const [currentPage, setCurrentPage] = useState('discover');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
+  const userProfileRef = useRef(null);
+  const researcherProfileRef = useRef(null);
 
   const checkAuthStatus = useCallback(async () => {
     try {
@@ -45,9 +48,11 @@ function App() {
         sex: session.prefs?.sex || ''
       });
       fetchResearchers();
+      
+
     } catch (error) {
-      console.log('User is not logged in');
-      setIsAuthenticated(false);
+      // console.log('User is not logged in');
+      // setIsAuthenticated(false);
       setLoading(false);
     }
   }, []);
@@ -160,9 +165,17 @@ function App() {
           </>
         );
       case 'user-profile':
-        return <UserProfile userProfile={userProfile} onSave={handleProfileSave} />;
+        return <UserProfile 
+          ref={userProfileRef}
+          userProfile={userProfile} 
+          onSave={handleProfileSave} 
+        />;
       case 'researcher-profile':
-        return <ResearcherProfile userProfile={userProfile} onSave={handleProfileSave} />;
+        return <ResearcherProfile 
+          ref={researcherProfileRef}
+          userProfile={userProfile} 
+          onSave={handleProfileSave} 
+        />;
       default:
         return <div>Page not found</div>;
     }

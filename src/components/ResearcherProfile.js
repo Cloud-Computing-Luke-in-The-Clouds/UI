@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import axios from 'axios';
 
-const ResearcherProfile = ({ userProfile, onSave }) => {
+const ResearcherProfile = forwardRef(({ userProfile, onSave }, ref) => {
   const fetchedRef = useRef(false);
   const [profile, setProfile] = useState({
     user_id: userProfile?.email || '',
@@ -27,7 +27,7 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
     
     try {
       const encodedEmail = encodeURIComponent(userProfile.email);
-      const response = await axios.get(`http://13.115.67.82:8000/researcher/${encodedEmail}`, {
+      const response = await axios.get(`https://researcher-profile-265479170833.us-central1.run.app/researcher/${encodedEmail}`, {
         headers: {
           'Authorization': `Bearer ${userProfile.accessToken}`,
           'Content-Type': 'application/json'
@@ -48,7 +48,7 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
             title: ''
           };
           
-          const createResponse = await axios.post('http://13.115.67.82:8000/researcher', newProfile, {
+          const createResponse = await axios.post('https://researcher-profile-265479170833.us-central1.run.app/researcher', newProfile, {
             headers: {
               'Authorization': `Bearer ${userProfile.accessToken}`,
               'Content-Type': 'application/json'
@@ -82,7 +82,7 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
     setLoading(true);
     try {
       const encodedEmail = encodeURIComponent(userProfile.email);
-      await axios.put(`http://13.115.67.82:8000/researcher/${encodedEmail}`, profile, {
+      await axios.put(`https://researcher-profile-265479170833.us-central1.run.app/researcher/${encodedEmail}`, profile, {
         headers: {
           'Authorization': `Bearer ${userProfile.accessToken}`,
           'Content-Type': 'application/json'
@@ -99,6 +99,10 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
       setLoading(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    fetchOrCreateProfile
+  }));
 
   if (loading) return <div className="loading">Loading researcher profile...</div>;
   if (error) return <div className="error">{error}</div>;
@@ -220,6 +224,6 @@ const ResearcherProfile = ({ userProfile, onSave }) => {
       )}
     </div>
   );
-};
+});
 
 export default ResearcherProfile;
