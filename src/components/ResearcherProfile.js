@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect } from 'react';
+import './UserProfile.css';
 import axios from 'axios';
 
-const ResearcherProfile = forwardRef(({ userProfile, onSave }, ref) => {
-  const fetchedRef = useRef(false);
+function ResearcherProfile({ userProfile }) {
   const [profile, setProfile] = useState({
     user_id: userProfile?.email || '',
     image_url: '',
@@ -16,8 +16,7 @@ const ResearcherProfile = forwardRef(({ userProfile, onSave }, ref) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (userProfile?.email && !fetchedRef.current) {
-      fetchedRef.current = true;
+    if (userProfile?.email) {
       fetchOrCreateProfile();
     }
   }, [userProfile]);
@@ -89,9 +88,6 @@ const ResearcherProfile = forwardRef(({ userProfile, onSave }, ref) => {
         }
       });
       setIsEditing(false);
-      if (onSave) {
-        onSave(profile);
-      }
     } catch (err) {
       setError('Failed to update profile');
       console.error('Profile update error:', err);
@@ -100,130 +96,234 @@ const ResearcherProfile = forwardRef(({ userProfile, onSave }, ref) => {
     }
   };
 
-  useImperativeHandle(ref, () => ({
-    fetchOrCreateProfile
-  }));
-
   if (loading) return <div className="loading">Loading researcher profile...</div>;
   if (error) return <div className="error">{error}</div>;
 
   return (
-    <div className="researcher-profile-container">
-      <h2>Researcher Profile</h2>
-      
+    <div className="user-profile-container">
+      <div className="profile-header">
+        <h2>Researcher Profile</h2>
+        <p className="subtitle">Manage your research information</p>
+      </div>
+
+      {error && (
+        <div className="error">
+          <i className="fas fa-exclamation-circle"></i>
+          {error}
+        </div>
+      )}
+
       {!isEditing ? (
         <div className="profile-view">
-          <p><strong>Email:</strong> {userProfile?.email}</p>
-          <p><strong>Title:</strong> {profile?.title || 'Not specified'}</p>
-          <p><strong>Organization:</strong> {profile?.organization || 'Not specified'}</p>
-          <p><strong>Google Scholar:</strong> 
-            {profile?.google_scholar_link ? (
-              <a href={profile?.google_scholar_link} target="_blank" rel="noopener noreferrer">
-                Link
-              </a>
-            ) : 'Not provided'}
-          </p>
-          <p><strong>Personal Website:</strong> 
-            {profile?.personal_website_link ? (
-              <a href={profile?.personal_website_link} target="_blank" rel="noopener noreferrer">
-                Link
-              </a>
-            ) : 'Not provided'}
-          </p>
-          <p><strong>Profile Image:</strong> 
-            {profile?.image_url ? (
-              <img src={profile?.image_url} alt="Profile" style={{maxWidth: '200px', display: 'block', marginTop: '10px'}} />
-            ) : 'No image uploaded'}
-          </p>
+          <div className="profile-field profile-image-field">
+            <i className="fas fa-image"></i>
+            <div>
+              <label>Profile Image</label>
+              {profile.image_url ? (
+                <div className="profile-image-container">
+                  <img 
+                    src={profile.image_url} 
+                    alt="Profile" 
+                    className="profile-image"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/default-profile.png';
+                    }}
+                  />
+                </div>
+              ) : (
+                <p>No image uploaded</p>
+              )}
+            </div>
+          </div>
+
+          <div className="profile-field">
+            <i className="fas fa-envelope"></i>
+            <div>
+              <label>Email</label>
+              <p>{userProfile?.email}</p>
+            </div>
+          </div>
+
+          <div className="profile-field">
+            <i className="fas fa-university"></i>
+            <div>
+              <label>Organization</label>
+              <p>{profile.organization || 'Not specified'}</p>
+            </div>
+          </div>
+
+          <div className="profile-field">
+            <i className="fas fa-user-graduate"></i>
+            <div>
+              <label>Title</label>
+              <p>{profile.title || 'Not specified'}</p>
+            </div>
+          </div>
+
+          <div className="profile-field">
+            <i className="fas fa-graduation-cap"></i>
+            <div>
+              <label>Google Scholar</label>
+              {profile.google_scholar_link ? (
+                <p>
+                  <a href={profile.google_scholar_link} 
+                     target="_blank" 
+                     rel="noopener noreferrer" 
+                     className="interest-tag">
+                    View Profile <i className="fas fa-external-link-alt"></i>
+                  </a>
+                </p>
+              ) : (
+                <p>Not specified</p>
+              )}
+            </div>
+          </div>
+
+          <div className="profile-field">
+            <i className="fas fa-globe"></i>
+            <div>
+              <label>Personal Website</label>
+              {profile.personal_website_link ? (
+                <p>
+                  <a href={profile.personal_website_link} 
+                     target="_blank" 
+                     rel="noopener noreferrer" 
+                     className="interest-tag">
+                    Visit Website <i className="fas fa-external-link-alt"></i>
+                  </a>
+                </p>
+              ) : (
+                <p>Not specified</p>
+              )}
+            </div>
+          </div>
+
           <button 
-            className="edit-button"
+            className="btn btn-primary"
             onClick={() => setIsEditing(true)}
           >
-            Edit Profile
+            <i className="fas fa-edit"></i> Edit Profile
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="profile-form">
+        <form onSubmit={handleSubmit} className={`profile-form ${loading ? 'loading' : ''}`}>
           <div className="form-group">
-            <label>Title:</label>
+            <label>
+              <i className="fas fa-image"></i> Profile Image URL
+            </label>
             <input
-              type="text"
-              name="title"
-              value={profile?.title || ''}
+              type="url"
+              name="image_url"
+              value={profile.image_url}
               onChange={handleInputChange}
               className="form-input"
-              placeholder="e.g., Professor, Research Scientist"
+              placeholder="https://example.com/your-image.jpg"
             />
+            <small className="form-help">Enter the URL of your profile image (JPEG, PNG formats recommended)</small>
+            
+            {profile.image_url && (
+              <div className="image-preview">
+                <img 
+                  src={profile.image_url} 
+                  alt="Profile Preview" 
+                  className="preview-image"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/default-profile.png';
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="form-group">
-            <label>Organization:</label>
+            <label>
+              <i className="fas fa-university"></i> Organization
+            </label>
             <input
               type="text"
               name="organization"
-              value={profile?.organization || ''}
+              value={profile.organization}
               onChange={handleInputChange}
               className="form-input"
-              placeholder="e.g., Columbia University"
+              placeholder="Enter your organization"
             />
           </div>
 
           <div className="form-group">
-            <label>Google Scholar Link:</label>
+            <label>
+              <i className="fas fa-user-graduate"></i> Title
+            </label>
+            <input
+              type="text"
+              name="title"
+              value={profile.title}
+              onChange={handleInputChange}
+              className="form-input"
+              placeholder="Enter your academic title"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>
+              <i className="fas fa-graduation-cap"></i> Google Scholar Link
+            </label>
             <input
               type="url"
               name="google_scholar_link"
-              value={profile?.google_scholar_link || ''}
+              value={profile.google_scholar_link}
               onChange={handleInputChange}
               className="form-input"
               placeholder="https://scholar.google.com/..."
             />
+            <small className="form-help">Enter the full URL to your Google Scholar profile</small>
           </div>
 
           <div className="form-group">
-            <label>Personal Website:</label>
+            <label>
+              <i className="fas fa-globe"></i> Personal Website
+            </label>
             <input
               type="url"
               name="personal_website_link"
-              value={profile?.personal_website_link || ''}
+              value={profile.personal_website_link}
               onChange={handleInputChange}
               className="form-input"
               placeholder="https://..."
             />
-          </div>
-
-          <div className="form-group">
-            <label>Profile Image URL:</label>
-            <input
-              type="url"
-              name="image_url"
-              value={profile?.image_url || ''}
-              onChange={handleInputChange}
-              className="form-input"
-              placeholder="https://..."
-            />
+            <small className="form-help">Enter the full URL to your personal website</small>
           </div>
 
           <div className="button-group">
             <button 
-              type="submit" 
-              className="save-button"
+              type="button" 
+              className="btn btn-secondary"
+              onClick={() => setIsEditing(false)}
               disabled={loading}
             >
-              {loading ? 'Saving...' : 'Save Changes'}
+              <i className="fas fa-times"></i> Cancel
             </button>
             <button 
-              type="button" 
-              className="cancel-button"
-              onClick={() => setIsEditing(false)}
+              type="submit" 
+              className="btn btn-primary"
+              disabled={loading}
             >
-              Cancel
+              {loading ? (
+                <>
+                  <i className="fas fa-spinner fa-spin"></i> Saving...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-save"></i> Save Changes
+                </>
+              )}
             </button>
           </div>
         </form>
       )}
     </div>
   );
-});
+}
 
 export default ResearcherProfile;

@@ -10,10 +10,6 @@ function ProfilePage({ userProfile, onSave }) {
     organization: userProfile?.organization || '',
     field_of_study: userProfile?.field_of_study || '',
     google_scholar_link: userProfile?.google_scholar_link || '',
-    personal_website_link: userProfile?.personal_website_link || '',
-    bio: userProfile?.bio || '',
-    email: userProfile?.email || '',
-    research_interests: userProfile?.research_interests || []
   });
 
   const handleChange = (e) => {

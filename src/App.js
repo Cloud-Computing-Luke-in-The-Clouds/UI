@@ -18,10 +18,18 @@ function App() {
   const [userProfile, setUserProfile] = useState(null);
   const userProfileRef = useRef(null);
   const researcherProfileRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const checkAuthStatus = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     try {
       const session = await account.get();
+      if (!session) {
+        setError('No session found. Please log in.');
+        return;
+      }
       
       const tokenPayload = {
         userId: session.$id,
@@ -30,31 +38,21 @@ function App() {
       };
       const token = jwt_encode(tokenPayload, 'test');
       
-      console.log('User Data:', {
-        email: session.email,
-        name: session.name,
-        id: session.$id,
-        emailVerification: session.emailVerification,
-        phone: session.phone,
-        preferences: session.prefs,
-      });
-      
-      setIsAuthenticated(true);
       setUserProfile({ 
         ...session, 
         accessToken: token,
-        interest_list: session.prefs?.interests || [],
-        age: session.prefs?.age || '',
-        sex: session.prefs?.sex || '',
-        email: session.email
       });
-      fetchResearchers();
       
-
+      setIsAuthenticated(true);
+      await fetchResearchers(token, session.email);
+      
     } catch (error) {
-      // console.log('User is not logged in');
-      // setIsAuthenticated(false);
-      setLoading(false);
+      console.error('Auth check failed:', error);
+      setError('Authentication failed. Please try again.');
+      setIsAuthenticated(false);
+      setUserProfile(null);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -203,17 +201,25 @@ function App() {
     );
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="app-container">
-        <nav className="navbar">
-          <div className="nav-brand">AcadeMingle</div>
-          <div className="nav-menu">
-            <button className="nav-item active">Discover</button>
-            <button className="nav-item">Profile</button>
-          </div>
-        </nav>
-        <div className="loading-screen">Loading...</div>
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <div className="error-message">
+          <i className="fas fa-exclamation-circle"></i>
+          <p>{error}</p>
+          <button onClick={checkAuthStatus} className="retry-button">
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }

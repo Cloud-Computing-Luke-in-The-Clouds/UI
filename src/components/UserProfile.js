@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect } from 'react';
+import './UserProfile.css';
 import axios from 'axios';
 
-const UserProfile = forwardRef(({ userProfile, onSave }, ref) => {
-  const fetchedRef = useRef(false);
+function UserProfile({ userProfile }) {
   const [profile, setProfile] = useState({
     name: userProfile?.name || '',
     age: userProfile?.age || '',
@@ -14,15 +14,10 @@ const UserProfile = forwardRef(({ userProfile, onSave }, ref) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (userProfile?.email && !fetchedRef.current) {
-      fetchedRef.current = true;
+    if (userProfile?.email) {
       fetchOrCreateProfile();
     }
   }, [userProfile]);
-
-  useImperativeHandle(ref, () => ({
-    fetchOrCreateProfile
-  }));
 
   const fetchOrCreateProfile = async () => {
     if (!userProfile?.email) return;
@@ -102,9 +97,6 @@ const UserProfile = forwardRef(({ userProfile, onSave }, ref) => {
         }
       });
       setIsEditing(false);
-      if (onSave) {
-        onSave(profile);
-      }
     } catch (err) {
       setError('Failed to update profile');
       console.error('Profile update error:', err);
@@ -113,73 +105,131 @@ const UserProfile = forwardRef(({ userProfile, onSave }, ref) => {
     }
   };
 
-  if (loading) return <div className="loading">Loading profile...</div>;
-  if (error) return <div className="error">{error}</div>;
-
   return (
     <div className="user-profile-container">
-      <h2>User Profile</h2>
+      <div className="profile-header">
+        <h2>User Profile</h2>
+        <p className="subtitle">Manage your personal information</p>
+      </div>
       
+      {error && (
+        <div className="error">
+          <i className="fas fa-exclamation-circle"></i>
+          {error}
+        </div>
+      )}
+
       {!isEditing ? (
         <div className="profile-view">
-          <p><strong>Email:</strong> {userProfile?.email}</p>
-          <p><strong>Name:</strong> {profile.name}</p>
-          <p><strong>Age:</strong> {profile.age}</p>
-          <p><strong>Sex:</strong> {profile.sex}</p>
-          <p>
-            <strong>Interests:</strong> 
-            {profile.interest_list && profile.interest_list.length > 0 
-              ? profile.interest_list.join(', ') 
-              : 'No interests added yet'}
-          </p>
+          <div className="profile-field">
+            <i className="fas fa-envelope"></i>
+            <div>
+              <label>Email</label>
+              <p>{userProfile?.email}</p>
+            </div>
+          </div>
+
+          <div className="profile-field">
+            <i className="fas fa-user"></i>
+            <div>
+              <label>Name</label>
+              <p>{profile.name || 'Not specified'}</p>
+            </div>
+          </div>
+
+          <div className="profile-field">
+            <i className="fas fa-birthday-cake"></i>
+            <div>
+              <label>Age</label>
+              <p>{profile.age || 'Not specified'}</p>
+            </div>
+          </div>
+
+          <div className="profile-field">
+            <i className="fas fa-venus-mars"></i>
+            <div>
+              <label>Sex</label>
+              <p>{profile.sex || 'Not specified'}</p>
+            </div>
+          </div>
+
+          <div className="profile-field">
+            <i className="fas fa-heart"></i>
+            <div>
+              <label>Interests</label>
+              <p>
+                {profile.interest_list && profile.interest_list.length > 0 
+                  ? profile.interest_list.map((interest, index) => (
+                      <span key={index} className="interest-tag">
+                        {interest}
+                      </span>
+                    ))
+                  : 'No interests added yet'}
+              </p>
+            </div>
+          </div>
+
           <button 
-            className="edit-button"
+            className="btn btn-primary"
             onClick={() => setIsEditing(true)}
           >
-            Edit Profile
+            <i className="fas fa-edit"></i> Edit Profile
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="profile-form">
+        <form onSubmit={handleSubmit} className={`profile-form ${loading ? 'loading' : ''}`}>
           <div className="form-group">
-            <label>Name:</label>
+            <label>
+              <i className="fas fa-user"></i> Name
+            </label>
             <input
               type="text"
               name="name"
               value={profile.name}
               onChange={handleInputChange}
               className="form-input"
+              placeholder="Enter your name"
             />
           </div>
 
           <div className="form-group">
-            <label>Age:</label>
+            <label>
+              <i className="fas fa-birthday-cake"></i> Age
+            </label>
             <input
               type="number"
               name="age"
               value={profile.age}
               onChange={handleInputChange}
               className="form-input"
+              placeholder="Enter your age"
+              min="0"
+              max="120"
             />
           </div>
 
           <div className="form-group">
-            <label>Sex:</label>
+            <label>
+              <i className="fas fa-venus-mars"></i> Sex
+            </label>
             <select 
               name="sex" 
               value={profile.sex} 
               onChange={handleInputChange}
               className="form-input"
             >
-              <option value="">Select...</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
+              <option value="">Select your sex...</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+              <option value="Prefer not to say">Prefer not to say</option>
             </select>
           </div>
 
           <div className="form-group">
-            <label>Interests (comma-separated):</label>
+            <label>
+              <i className="fas fa-heart"></i> Interests
+            </label>
             <input
               type="text"
               value={(profile.interest_list && profile.interest_list.length > 0) 
@@ -189,28 +239,38 @@ const UserProfile = forwardRef(({ userProfile, onSave }, ref) => {
               className="form-input"
               placeholder="e.g., AI, Machine Learning, Data Science"
             />
+            <small className="form-help">Separate interests with commas</small>
           </div>
 
           <div className="button-group">
             <button 
-              type="submit" 
-              className="save-button"
+              type="button" 
+              className="btn btn-secondary"
+              onClick={() => setIsEditing(false)}
               disabled={loading}
             >
-              {loading ? 'Saving...' : 'Save Changes'}
+              <i className="fas fa-times"></i> Cancel
             </button>
             <button 
-              type="button" 
-              className="cancel-button"
-              onClick={() => setIsEditing(false)}
+              type="submit" 
+              className="btn btn-primary"
+              disabled={loading}
             >
-              Cancel
+              {loading ? (
+                <>
+                  <i className="fas fa-spinner fa-spin"></i> Saving...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-save"></i> Save Changes
+                </>
+              )}
             </button>
           </div>
         </form>
       )}
     </div>
   );
-});
+}
 
 export default UserProfile;
