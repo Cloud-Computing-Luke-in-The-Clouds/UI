@@ -32,7 +32,7 @@ const UserProfile = forwardRef(({ userProfile, onSave }, ref) => {
       const encodedEmail = encodeURIComponent(userProfile.email);
       
       // First try to get the existing profile
-      const response = await axios.get(`http://34.31.64.142:8000/user/${encodedEmail}`, {
+      const response = await axios.get(`http://34.31.64.142:8080/user/${encodedEmail}`, {
         headers: {
           'Authorization': `Bearer ${userProfile.accessToken}`,
           'Content-Type': 'application/json'
@@ -48,11 +48,11 @@ const UserProfile = forwardRef(({ userProfile, onSave }, ref) => {
           const newProfile = {
             user_id: userProfile.email,  // Use raw email for the body
             name: userProfile.name || '',
-            age: userProfile.age || '',
-            sex: userProfile.sex || '',
-            interest_list: userProfile.interest_list || []
+            age: null,
+            sex: null,
+            interest_list: []
           };
-          const createResponse = await axios.post('http://34.31.64.142:8000/user', newProfile, {
+          const createResponse = await axios.post('http://34.31.64.142:8080/user', newProfile, {
             headers: {
               'Authorization': `Bearer ${userProfile.accessToken}`,
               'Content-Type': 'application/json'
@@ -95,7 +95,7 @@ const UserProfile = forwardRef(({ userProfile, onSave }, ref) => {
       // Encode the email for the URL
       const encodedEmail = encodeURIComponent(userProfile.email);
       
-      await axios.put(`http://34.31.64.142:8000/user/${encodedEmail}`, profile, {
+      await axios.put(`http://34.31.64.142:8080/user/${encodedEmail}`, profile, {
         headers: {
           'Authorization': `Bearer ${userProfile.accessToken}`,
           'Content-Type': 'application/json'

@@ -77,20 +77,27 @@ function App() {
       const response = await fetch('https://researcher-profile-265479170833.us-central1.run.app/researchers');
       const data = await response.json();
       const transformedData = data.items.map((researcher) => ({
+        user_id: researcher.user_id,
         imageUrl: researcher.image_url,
-        // name: researcher.researcher_name,
-        // field_of_study: "Not specified",
-        // school_organization: researcher.organization,
-        // present: true,
         google_scholar_link: researcher.google_scholar_link,
         personal_website_link: researcher.personal_website_link,
         organization: researcher.organization,
         title: researcher.title,
-        // age: researcher.age,
-        // sex: researcher.sex,
-        // research_papers: []
       }));
       setResearchers(transformedData);
+      for (const researcher of transformedData) {
+        const response = await axios.get(`http://34.31.64.142:8080/user/${researcher.user_id}`, {
+          headers: {
+            'Authorization': `Bearer ${userProfile.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        researcher.name = response.data.name;
+        researcher.age = response.data.age;
+        researcher.sex = response.data.sex;
+        researcher.interest_list = response.data.interest_list;
+        console.log(researcher);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Error fetching researchers:', error);
